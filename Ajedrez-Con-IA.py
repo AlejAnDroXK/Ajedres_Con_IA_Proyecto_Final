@@ -16,7 +16,7 @@ BLACK = (119, 148, 85)
 # Ruta al ejecutable Stockfish
 STOCKFISH_PATH = os.path.join("C:\\Users\\youll\\OneDrive\\Desktop\\UDLA\II SEMESTRE\\Programacion\\Ajedres_Con_IA_Proyecto_Final\\stockfish", "stockfish-windows-x86-64-avx2.exe")
 
-# Cargar imágenes de piezas
+# Cargar imágenes de piezasS
 PIECE_IMAGES = {}
 
 # Función donde obtiene las imagenes de la carpeta images
@@ -379,7 +379,7 @@ def main():
                             board.push(move)
                             move_log.append(board.peek().uci())
                             move_sound.play()
-
+                            
                             # Reinicia la seleccion del jugaror
                             selected_square = None
                             legal_moves = []
