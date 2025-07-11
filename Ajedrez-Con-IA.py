@@ -254,6 +254,7 @@ selected_square = None #Guarda donde selecciona el jugaro mover pieza
 legal_moves = [] #La lista de movimientos legales 
 #M ///////////////////////////////////////////////////////////////////////
 
+#A ///////////////////////////////////////////////////////////////////////
 # Funcion principal
 def main():
     #Inicializa el "programa" que nos permite dibujar 
@@ -263,7 +264,7 @@ def main():
     pygame.mixer.init()
     move_sound = pygame.mixer.Sound("sounds/pum.mp3")
 
-    # Para mostrar la pantalla
+    # Crea la ventana principal con el tamaño definido
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Ajedrez vs Stockfish")
     clock = pygame.time.Clock()
@@ -271,7 +272,7 @@ def main():
     # Mostrar menú gráfico para elegir color, dificultad y tiempo
     player_is_white, level, time_minutes = show_start_menu(screen)
     
-     # Inicializar tiempos 
+     # Inicializar tiempos en segundos
     player_time = time_minutes * 60 
     engine_time = time_minutes * 60
     last_tick = pygame.time.get_ticks()
@@ -279,26 +280,27 @@ def main():
     # Cargar las imágenes
     load_images()
     
-    # Inicializar el tablero
+    # Inicializar el tablero con la posición inicial
     board = chess.Board()
 
     # Iniciar el motor o la IA "Stockfish"
     engine = chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH)
     stockfish_thinking_time = 0.1 * level
 
-    # Aqui si escojimos jugar con negras la IA empieza a jugar
+    # Aqui si escojimos jugar con negras, la IA empieza a jugar con blancas y juega primero
     if not player_is_white:
         result = engine.play(board, chess.engine.Limit(time=stockfish_thinking_time))
         board.push(result.move)
         move_sound.play()
 
-    # Aquí empieza el bucle principal del juego
+    # Variables para la selección de piezas y control del bucle
     selected_square = None
     running = True
     
+    #Mientras se ejecuta hacer todo lo siguiente
     while running:
-        screen.fill(pygame.Color("black"))
-        # Calcular tiempo transcurrido desde el último frame
+        screen.fill(pygame.Color("black")) #limpia la pantalla 
+        # Calcular tiempo transcurrido desde el último frame para el reloj
         now = pygame.time.get_ticks()
         delta = (now - last_tick) / 1000 
         last_tick = now
@@ -308,7 +310,7 @@ def main():
             player_time -= delta
         else:
             engine_time -= delta
-
+        # Condiciones de derrota por tiempo
         if player_time <= 0:
             msg = "¡Tiempo agotado! Gana Stockfish"
             running = False
@@ -325,29 +327,28 @@ def main():
             pygame.display.flip()
             pygame.time.wait(4000)
             continue
-
+        
+        # Dibuja tablero, piezas y botón rendirse
         draw_board(screen, board, selected_square)
         if selected_square is not None:
             draw_legal_moves(screen, legal_moves)
         
         # Mostrar relojes
         clock_font = pygame.font.SysFont(None, 28)
-
+        #Dibuja los relojes del jugador y la IA
         def format_time(seconds):
             minutes = int(seconds) // 60
             sec = int(seconds) % 60
             return f"{minutes:02}:{sec:02}"
-
+        #
         screen.blit(clock_font.render("Jugador:", True, (255, 255, 255)), (BOARD_WIDTH + 40, 20))
         screen.blit(clock_font.render(format_time(player_time), True, (255, 255, 255)), (BOARD_WIDTH + 140, 20))
 
         screen.blit(clock_font.render("Stockfish:", True, (255, 255, 255)), (BOARD_WIDTH + 40, 50))
         screen.blit(clock_font.render(format_time(engine_time), True, (255, 255, 255)), (BOARD_WIDTH + 140, 50))
-
-
         pygame.display.flip()
 
-        #Ya cuando alguien de los dos gane la partida
+        #Ya cuando alguien de los dos gane la partidacomprueba si fuepor jaque o tablas
         if board.is_game_over():
             result = board.result()
             font = pygame.font.SysFont(None, 60)
@@ -366,11 +367,11 @@ def main():
             running = False
             continue
 
-        #Revisa todo lo que esta haciendo el jugador
+        #Revisa todo lo que esta haciendo el jugador con los cliks de los events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
+            # Turno del jugador 
             elif event.type == pygame.MOUSEBUTTONDOWN and board.turn == (chess.WHITE if player_is_white else chess.BLACK):
                 # Verificar clic en el botón de rendición
                 pos = pygame.mouse.get_pos()
@@ -399,13 +400,14 @@ def main():
                             piece = board.piece_at(selected_square)
                             target_piece = board.piece_at(square)
                             piece_symbol = piece.symbol()
-                            #Regitrar la captura de ficha
+                            #Regitrar la captura de ficha si hubiese lapieza
                             if target_piece:
                                 if target_piece.color == chess.WHITE:
                                     white_captured.append(target_piece.symbol())
                                 else:
                                     black_captured.append(target_piece.symbol())
 
+                            # Animar y hacer el movimiento del jugador
                             animate_move(screen, board, piece_symbol, selected_square, square)
                             board.push(move)
                             move_log.append(board.peek().uci())
@@ -434,12 +436,16 @@ def main():
                             # Si el segundo clic no es movimiento legal, reiniciar selección
                             selected_square = None
                             legal_moves = []
+#A ///////////////////////////////////////////////////////////////////////
 
-
+#A ///////////////////////////////////////////////////////////////////////
     clock.tick(60)#Limita los fotogramas
     engine.quit()#Cierra tockfish y libera u proceso en segundo plano
     pygame.quit()#inzaliza y elimina toods lo procesos como imagenes, sonidos
+#A ///////////////////////////////////////////////////////////////////////
     
-#Asegura de su ejecucion solo si se ejecuta directamente desde este archivo y no desde otro script
+#A ///////////////////////////////////////////////////////////////////////
+#Asegura de su ejecucion solo si se ejecuta directamente desde este archivo y no desde otro script o como modulo
 if __name__ == "__main__":
     main()
+#A ///////////////////////////////////////////////////////////////////////
