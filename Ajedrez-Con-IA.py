@@ -1,9 +1,12 @@
-import pygame
-import chess
-import chess.engine
-import os
+#M ///////////////////////////////////////////////////////////////////////
+import pygame #manejar imagenes,audios,clicks,texto
+import chess #logica del ajedrez (reglas, movimientos)
+import chess.engine #comunicarse con stockfish
+import os #definir la ubicacion de Stockfish
+#M ///////////////////////////////////////////////////////////////////////
 
-# CONFIGURACIÓN para el tamaño del tablero
+#M ///////////////////////////////////////////////////////////////////////
+# CONFIGURACIÓN para el tamaño y colores del tablero
 BOARD_WIDTH = 640
 BOARD_HEIGHT = 640
 EXTRA_WIDTH = 240
@@ -12,26 +15,36 @@ HEIGHT = BOARD_HEIGHT + 40
 SQUARE_SIZE = BOARD_WIDTH // 8
 WHITE = (245, 245, 220)
 BLACK = (119, 148, 85)
+#M ///////////////////////////////////////////////////////////////////////
 
+#M ///////////////////////////////////////////////////////////////////////
 # Ruta al ejecutable Stockfish
 STOCKFISH_PATH = os.path.join("C:\\Users\\youll\\OneDrive\\Desktop\\UDLA\II SEMESTRE\\Programacion\\Ajedres_Con_IA_Proyecto_Final\\stockfish", "stockfish-windows-x86-64-avx2.exe")
+#M ///////////////////////////////////////////////////////////////////////
 
-# Cargar imágenes de piezasS
+#M ///////////////////////////////////////////////////////////////////////
+# Se crea un diccionario, para guardar las imagenes
 PIECE_IMAGES = {}
+#M ///////////////////////////////////////////////////////////////////////
 
+#M ///////////////////////////////////////////////////////////////////////
 # Función donde obtiene las imagenes de la carpeta images
 def load_images():
+    #Diccionario de las imagenes, las carga
     piece_symbols = {
         'P': 'wP', 'N': 'wN', 'B': 'wB', 'R': 'wR', 'Q': 'wQ', 'K': 'wK',
         'p': 'bP', 'n': 'bN', 'b': 'bB', 'r': 'bR', 'q': 'bQ', 'k': 'bK'
     }
+    #Carga, redimensiona cada imagen y luego las guarda
     for symbol, filename in piece_symbols.items():
         PIECE_IMAGES[symbol] = pygame.transform.scale(
             pygame.image.load(f"images/{filename}.svg"),
             (SQUARE_SIZE, SQUARE_SIZE)
         )
+#M ///////////////////////////////////////////////////////////////////////
 
-# Función para dibujar el tablero
+#M ///////////////////////////////////////////////////////////////////////
+# Función para dibujar el tablero visualmente
 def draw_board(screen, board, selected_square=None):
     # Dibujar el botón de rendición
     button_font = pygame.font.SysFont(None, 30)
@@ -43,38 +56,36 @@ def draw_board(screen, board, selected_square=None):
     # Mostrar piezas comidas
     captured_font = pygame.font.SysFont(None, 20)
     screen.blit(captured_font.render("Blancas comidas:", True, (255, 255, 255)), (BOARD_WIDTH + 40, 160))
+    #Agarra la imagen de la que se la comieron y la carga enlaparte de piezas comidas
     for i, piece in enumerate(white_captured[-10:]):  
         img = pygame.transform.scale(PIECE_IMAGES[piece], (25, 25))
         screen.blit(img, (BOARD_WIDTH + 40 + (i % 5) * 24, 180 + (i // 5) * 24))
-
     screen.blit(captured_font.render("Negras comidas:", True, (255, 255, 255)), (BOARD_WIDTH + 40, 240))
     for i, piece in enumerate(black_captured[-10:]):
         img = pygame.transform.scale(PIECE_IMAGES[piece], (25, 25))
         screen.blit(img, (BOARD_WIDTH + 40 + (i % 5) * 24, 260 + (i // 5) * 24))
-
+    
+    #Colores de las casillas del tablero predefinidas
     colors = [WHITE, BLACK]
 
-    # Para ver si hay jaque
+    # Verificar si el rey está en jaque con python_chess
     in_check = board.is_check()
     check_square = None
     if in_check:
         king_square = board.king(board.turn)
         check_square = king_square
 
-    font = pygame.font.SysFont(None, 20)
-    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
-
+    # Dibujar el tablero y marcar el jaque
     for row in range(8):
         for col in range(8):
             square = chess.square(col, 7 - row)
             color = colors[(row + col) % 2]
-
             # Colorea el rey en jaque
             if square == check_square:
                 color = (255, 0, 0)
-
             pygame.draw.rect(screen, color, pygame.Rect(col*SQUARE_SIZE, row*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
+    #Dibujar las piezas
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece:
@@ -82,6 +93,10 @@ def draw_board(screen, board, selected_square=None):
             col = square % 8
             screen.blit(PIECE_IMAGES[piece.symbol()], pygame.Rect(col*SQUARE_SIZE, row*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
+    #Dibujar correctamente los ejes del tablero (letras y números). 
+    font = pygame.font.SysFont(None, 20)
+    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+    
     # Dibujar letras (a-h) en la parte inferior
     for i, letter in enumerate(letters):
         text = font.render(letter, True, (255, 255, 255))
@@ -96,56 +111,69 @@ def draw_board(screen, board, selected_square=None):
         x = 5  
         y = i * SQUARE_SIZE + SQUARE_SIZE // 2 - text.get_height() // 2
         screen.blit(text, (x, y))
+#M ///////////////////////////////////////////////////////////////////////
 
+#M ///////////////////////////////////////////////////////////////////////
 # Función para ver los movimiento legales que podemos hacer
 def draw_legal_moves(screen, legal_moves):
+    #Recorre cada destino y en donde el movimiento es legal dibuja un circulo
     for square in legal_moves:
         col = square % 8
         row = 7 - square // 8
         center = (col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2)
-        pygame.draw.circle(screen, (0, 255, 0), center, 10)  # Verde
+        pygame.draw.circle(screen, (0, 255, 0), center, 10) 
+#M ///////////////////////////////////////////////////////////////////////
 
+#M ///////////////////////////////////////////////////////////////////////
 #  Convertir coordenadas de mouse para asi mover las fichas
 def get_square(pos):
     x, y = pos
     if x >= BOARD_WIDTH or y >= BOARD_HEIGHT:
-        return None  # clic fuera del tablero
+        return None  # clic fuera del tablero no hce nd
     col = x // SQUARE_SIZE
     row = 7 - (y // SQUARE_SIZE)
     return chess.square(col, row)
+#M ///////////////////////////////////////////////////////////////////////
 
+#M ///////////////////////////////////////////////////////////////////////
 # Función para hacer el movimiento de arrastre en las piezas
 def animate_move(screen, board, piece_symbol, start_square, end_square):
+    #Obtener fila y columna de origen y destino
     start_col = chess.square_file(start_square)
     start_row = 7 - chess.square_rank(start_square)
     end_col = chess.square_file(end_square)
     end_row = 7 - chess.square_rank(end_square)
-
+    #Definir la cantidad de pasos de animación
     steps = 10
+    #Bucle para animar el movimiento
     for i in range(1, steps + 1):
-        draw_board(screen, board)  # Redibuja el tablero sin mover todavía
+        draw_board(screen, board)  # Redibuja el tablero sin mover la pieza
         t = i / steps
         x = (1 - t) * start_col + t * end_col
         y = (1 - t) * start_row + t * end_row
-        screen.blit(
+        screen.blit(#Dibujar la pieza en su posición intermedia
             PIECE_IMAGES[piece_symbol],
             pygame.Rect(x * SQUARE_SIZE, y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
         )
+        #Mostrar en pantalla y esperar un poco
         pygame.display.flip()
         pygame.time.wait(20)
+#M ///////////////////////////////////////////////////////////////////////
 
+#M ///////////////////////////////////////////////////////////////////////
 #Funcion para dar estilo al menu y crear el menu
 def show_start_menu(screen):
+    #Inicialización de fuentes y reloj
     pygame.font.init()
     title_font = pygame.font.SysFont("arial", 48)
     option_font = pygame.font.SysFont("arial", 32)
     clock = pygame.time.Clock()
-
+    #Variables para las opciones seleccionadas por defecto
     selected_color = "white"
     difficulty = 3
     time_minutes = 5
     start_button = pygame.Rect(380, 500, 200, 50)
-
+    #Bucle infinito para mantener el menú visible 
     while True:
         screen.fill((0, 0, 0))
 
@@ -179,12 +207,12 @@ def show_start_menu(screen):
             pygame.draw.rect(screen, color, btn)
             screen.blit(option_font.render(str(t), True, (0, 0, 0)), (btn.x + 12, btn.y + 5))
 
-
         # Botón de inicio
         pygame.draw.rect(screen, (75, 0, 130), start_button)
         screen.blit(option_font.render("Iniciar Partida", True, (255, 255, 255)),
                     (start_button.x + 10, start_button.y + 10))
-
+        
+        #Actualizar pantalla y controlar FPS
         pygame.display.flip()
         clock.tick(60)
         
@@ -215,13 +243,16 @@ def show_start_menu(screen):
                 # Verfica si presionamos iniciar partida
                 if start_button.collidepoint(pos):
                     return selected_color == "white", difficulty, time_minutes
+#M ///////////////////////////////////////////////////////////////////////
 
+#M ///////////////////////////////////////////////////////////////////////
 # Variables o listas donde se registraran datos
 white_captured = [] #Blanca capturadas
 black_captured = [] #Negras capturadas
 move_log = [] #Los movimientos se van air guardando
 selected_square = None #Guarda donde selecciona el jugaro mover pieza
 legal_moves = [] #La lista de movimientos legales 
+#M ///////////////////////////////////////////////////////////////////////
 
 # Funcion principal
 def main():
